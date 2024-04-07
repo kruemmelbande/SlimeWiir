@@ -57,7 +57,7 @@ try:
     # Main loop to calculate angles
     now=time.perf_counter()
     while True:
-        #time.sleep(0.02)
+        time.sleep(0.01)
         
         # Read motionplus data
         motion_data = wiimote.state['motionplus']['angle_rate']
@@ -66,9 +66,8 @@ try:
         adjusted_rates = [(motion_data[i] - gyro_offsets[i]) * multiplier for i in range(3)]
         
         # Integrate gyro rates to get angles
-        gyro_angles = [(gyro_angles[i] + adjusted_rates[i] * (time.perf_counter()-now)) for i in range(3)]  # 0.01 is the time interval
+        gyro_angles = [(gyro_angles[i] + adjusted_rates[i] * (time.perf_counter()-now)) for i in range(3)]
         now=time.perf_counter()
-        # Print gyro angles
         #print(f"Gyro Angles (degrees): X={gyro_angles[0]:.2f}, Y={gyro_angles[1]:.2f}, Z={gyro_angles[2]:.2f}")
         
         #asyncio.run(s.set_rotation(1,0,0,gyro_angles[1]))
