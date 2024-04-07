@@ -18,7 +18,8 @@ async def main():
     #await asyncio.sleep(4)
     await s.send_reset()
     print("yaw reset")
-
+print("This program is intended as a joke. While it technically works, that doesnt mean its worth using it.\nWiimotes give terrible tracking quality, and thats expected. This is not representitive of what slimevr can be.\n\n!!!IF YOU ACTUALLY WANT FBT, DO NOT USE THIS!!!\n\n")
+time.sleep(1)
 # Connect to the Wiimote
 print("Press 1+2 on your Wiimote to connect...")
 time.sleep(1)
