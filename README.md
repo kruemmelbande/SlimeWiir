@@ -1,7 +1,8 @@
 # This project was created for entertainment purposes only.  
 Wiimotes have terrible imus, and are not intended to be trackers.  
-Please do not ever buy wiimotes for the purposes of using them as trackers.
-Its probably not worth your time to try this. You will get drift within about 3 seconds, due to a complete lack of sensor fusion.
+Please do not ever buy wiimotes for the purposes of using them as trackers.   
+Its probably not worth your time to try this.
+You will get drift within about 3 seconds, due to a complete lack of sensor fusion.   
   
 This has only been tested with linux.  
 You will need to install the cwiid library, which might be a bit difficult.  
