@@ -67,7 +67,7 @@ try:
         # Read motionplus data
         motion_data = wiimote.state['motionplus']['angle_rate']
         accel_data = wiimote.state['acc']
-        #print("Accelerometer values (X, Y, Z):", acc)
+        #print("Accelerometer values (X, Y, Z):", accel_data)
         # Subtract initial offsets from gyro rates
         adjusted_rates = [(motion_data[i] - gyro_offsets[i]) * multiplier for i in range(3)]
         
@@ -82,14 +82,15 @@ try:
         roll_acc = math.atan2(-adjusted_acc[1], adjusted_acc[2])
 
         # Combine gyroscope and accelerometer data using a complementary filter (i know half of these words)
-        alpha = 0.70  # Weight for gyroscope data
+        alpha = 0.90  # Weight for gyroscope data
         dt=time.perf_counter()-now
         now=time.perf_counter()
-        pitch = alpha * (gyro_angles[1] + adjusted_rates[0] * dt) + (1 - alpha) * pitch_acc
-        roll = alpha * (gyro_angles[0] + adjusted_rates[1] * dt) + (1 - alpha) * roll_acc
+        pitch = alpha * (gyro_angles[0] + adjusted_rates[0] * dt) + (1 - alpha) * pitch_acc
+        roll = alpha * (gyro_angles[2] + adjusted_rates[2] * dt) + (1 - alpha) * roll_acc
 
         # Update rotation sent to server
-        asyncio.run(s.set_rotation(1, -roll, -gyro_angles[2], -pitch))
+        # pitch, roll, yaw
+        asyncio.run(s.set_rotation(1, -pitch, -roll, -gyro_angles[1]))
 
         #in theory we now have gyro angles. This however is not a perfect approach. Since we are only reading the gyro, and gyros drift, so will our final output.
         #what we need to do is take the accel into account, and do sensor fusion to reach a better result.
