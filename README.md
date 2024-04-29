@@ -2,7 +2,12 @@
 Wiimotes have terrible imus, and are not intended to be trackers.  
 Please do not ever buy wiimotes for the purposes of using them as trackers.   
 Its probably not worth your time to try this.  
-You will get drift within about 3 seconds, due to a complete lack of sensor fusion.   
+You will get drift within about 3 seconds, due to a complete lack of sensor fusion.  
+UPDATE!
+I am now doing sensor fusion!
+Quite badly, might i add, but i am technically doing it, and its kinda working.  
+pitch and roll are entirely decided by the accel now, which is probably a very bad idea, but its better than just the gyro.  
+I could actually make it gyro+accel, but like, thats a lot of math, and my brain already hurts from making yaw alone work.  
   
 This has only been tested with linux.  
 You will need to install the cwiid library, which might be a bit difficult.  
