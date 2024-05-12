@@ -2,11 +2,10 @@ import cwiid
 import time
 import asyncio
 import sender
-import numpy as np
 import math
 import json
 
-dryrun=False
+dryrun=False #Just connect to wiimotes without connecting to the slimevr server
 
 async def main():
     global s
@@ -76,7 +75,9 @@ try:
         if calibrationMode.strip()=="a":
             print("Sampling gyro rates for 2 seconds to determine initial orientation...")
             print("put wiimote face down and dont move it!")
-            time.sleep(5)
+            
+            input("Press enter to continue...")
+            time.sleep(1)
             print("calibration started...")
             start_time = time.time()
             samples = 0
@@ -92,12 +93,10 @@ try:
             gyro_offsets = [offset / samples for offset in gyro_offsets]
             acc_offsets_1 = [offset / samples for offset in acc_offsets_1]   
             
-
-            
             print("Please turn the wiimote face up.")
             
-            
-            time.sleep(8)
+            input("Press enter to continue...")
+            time.sleep(1)
             print("calibration started...")
             start_time = time.time()
             samples = 0
@@ -116,8 +115,6 @@ try:
                     "gyro_offsets":gyro_offsets,
                     "acc_offsets":acc_offsets
                 },f)
-            all_gyro.append(gyro_offsets)
-            all_acc.append(acc_offsets)
         else:
             try:
                 with open("calibrationcache","r") as f:
@@ -128,11 +125,13 @@ try:
                 print("No calibration data cached. Exiting...")
                 print(e)
                 exit()
+        all_gyro.append(gyro_offsets)
+        all_acc.append(acc_offsets)
         print("Initial gyro offsets:", gyro_offsets)
-        multiplier= 360/5700
-        # Main loop to calculate angles
+        multiplier= 360/5700 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3
         now=time.perf_counter()
         yaw=0
+    print("Starting to send imu data...")
     while True:
         time.sleep(0.02)
         for wiimote,accel_offsets,gyro_offsets,num in zip(wiimotes,all_acc,all_gyro,range(numberWiimotes)):
@@ -156,30 +155,22 @@ try:
             yaw-=gyro_yaw_delta
 
             # This looks like fancy math, and it looks like i know what im doing. Well ur wrong, i have no idea what this is. What i do know however, is that it does nothing. Correcting the gyro with accel is literally just placebo and does nothing since the accel is very very unreliable
+            #UPDATE: With amazing tech advances, its not placebo anymore! Its worse than placebo now!
 
             # Combine gyroscope and accelerometer data using a complementary filter (i know half of these words)
-            alpha = 0.90  # Weight for gyroscope data
+            alpha = 0.90  # Weight for gyroscope data (which is not used, and i should just delete this line of code, but here i am writing funny comments)
             dt=time.perf_counter()-now
             now=time.perf_counter()
-            #pitch = alpha * (gyro_angles[0] + adjusted_rates[0] * dt) + (1 - alpha) * pitch_acc
-            #roll = alpha * (gyro_angles)[2] + adjusted_rates[2] * dt) + (1 - alpha) * roll_acc
+
             pitch=-math.degrees(pitch_acc)
             roll=-math.degrees(roll_acc)
         
             # Update rotation sent to server
             # pitch, roll, yaw
-            #print(pitch, "\t",roll,"\t",yaw) #print("Accelerometer values (X, Y, Z):", accel_data)
             if not dryrun:
                 asyncio.run(s.set_rotation(num+1, -pitch, -roll, -yaw))
-
-            #in theory we now have gyro angles. This however is not a perfect approach. Since we are only reading the gyro, and gyros drift, so will our final output.
-            #what we need to do is take the accel into account, and do sensor fusion to reach a better result.
+                #for the love of god, dont ask why i invert pitch when i convert from radians to degerees, and then invert it again afterwards
             
-            #now=time.perf_counter()
-            #print(f"Gyro Angles (degrees): X={gyro_angles[0]:.2f}, Y={gyro_angles[1]:.2f}, Z={gyro_angles[2]:.2f}")
-            
-            #asyncio.run(s.set_rotation(1,0,0,gyro_angles[1]))
-        #asyncio.run(s.set_rotation(1,-gyro_angles[0],-gyro_angles[2],-gyro_angles[1]))
 except KeyboardInterrupt:
     print("Closing connection...")
     for wiimote in wiimotes:
