@@ -6,6 +6,7 @@ import math
 import json
 from vqf import VQF
 import numpy as np
+import quaternion
 
 #vqf = VQF(0.02)
 dryrun=False #Just connect to wiimotes without connecting to the slimevr server
@@ -23,7 +24,8 @@ async def main():
             await s.set_rotation(i+1,0,0,0)
             print("init imu ", i+1)
             #await asyncio.sleep(4)
-        
+    
+
 print("This program is intended as a joke. While it technically works, that doesnt mean its worth using it.\nWiimotes give terrible tracking quality, and thats expected. This is not representitive of what slimevr can be.\n\n!!!IF YOU ACTUALLY WANT FBT, DO NOT USE THIS!!!\n\n")
 time.sleep(1)
 # Connect to the Wiimote
@@ -71,7 +73,7 @@ try:
     for num,wiimote,vqf in zip(range(numberWiimotes),wiimotes,vqfobjects):
         if numberWiimotes==1:
             while True:
-                calibrationMode=input("Auto calibrate (recommended) [a] or use cached calibration [c]")
+                calibrationMode=input("Auto calibrate (recommended) [a] or use cached calibration [c] ")
                 if calibrationMode.strip() in ["a","c"]:
                     break
         else:
@@ -118,17 +120,31 @@ try:
             print(acc_offsets)
             print(acc_offsets_1)
             print(acc_offsets_2)
+            print("Time do to senscal because fuck you")
+            print("I could give you instructions here... But fuck you, its your fault we have to do this. I didnt wanna, but you dont leave me another choice")
+            input("By pressing enter you confirm that you do not have a life")
+            gyrosens=[0,0,0]
+            while time.time() - start_time < 20:
+                motion_data = wiimote.state['motionplus']['angle_rate']
+                gyrosens = [abs(gyrosens[i] + motion_data[i] - gyro_offsets[i]) for i in range(3)]
+                time.sleep(0.01)
+            #i am making this shit up as i go. I have no idea what any of this does, i wanna sleep
+            sens=[(360/gyrosens[i]) for i in range(3)]
+            print(sens)
             with open("calibrationcache","w") as f:
                 json.dump({
                     "gyro_offsets":gyro_offsets,
-                    "acc_offsets":acc_offsets
+                    "acc_offsets":acc_offsets,
+                    "sens":sens
                 },f)
+
         else:
             try:
                 with open("calibrationcache","r") as f:
                     cal=json.load(f)
                     gyro_offsets=cal["gyro_offsets"]
                     acc_offsets=cal["acc_offsets"]
+                    sens=cal["sens"]
             except Exception as e:
                 print("No calibration data cached. Exiting...")
                 print(e)
@@ -136,7 +152,7 @@ try:
         all_gyro.append(gyro_offsets)
         all_acc.append(acc_offsets)
         print("Initial gyro offsets:", gyro_offsets)
-        multiplier= math.radians(360/7000)*0.8 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3
+        multiplier= math.radians(360/7000)*0.8 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3 (There used to be some sense behind this, i have since long abandoned this principle)
         now=time.perf_counter()
         yaw=0
     print("Starting to send imu data...")
@@ -156,12 +172,18 @@ try:
             roll_acc = (math.atan2(-adjusted_acc[1], adjusted_acc[2]))
             pitch_acc,roll_acc=roll_acc,pitch_acc
             # Subtract initial offsets from gyro rates
-            adjusted_rates = [(motion_data[i] - gyro_offsets[i]) * multiplier for i in range(3)]
-            aj = np.array([-adjusted_rates[1],-adjusted_rates[0],adjusted_rates[2]])
+            adjusted_rates = [(motion_data[i] - gyro_offsets[i]) * sens[i] for i in range(3)]
+            
+            #Thy who shall read the following code be aware
+            #This code was not made with logic or reasoning... Or even the smartness of chatgpt...
+            #No, this code is pure anger and incompetence, and as a result does not work
+            aj = np.array([-adjusted_rates[1],adjusted_rates[2],adjusted_rates[0]])
             vqf.updateGyr(aj)
-            aa = np.array([adjusted_acc[1],adjusted_acc[0],adjusted_acc[2]])
+            aa = np.array([-adjusted_acc[1],-adjusted_acc[2],-adjusted_acc[0]])
             #aa= np.array([0.,0.,0.])
             vqf.updateAcc(aa)
+            #fuck that part, i hate that
+            
             
             gyro_yaw_delta = math.radians(adjusted_rates[2] * math.cos(pitch_acc) + adjusted_rates[1] * math.sin(roll_acc) * math.sin(pitch_acc) + adjusted_rates[0] * math.cos(roll_acc) * math.sin(pitch_acc))
             # Integrate gyracc_offsets_2acc_offsets_2o rates to get angles
@@ -193,7 +215,7 @@ try:
             # Update rotation sent to server
             # pitch, roll, yaw
             if not dryrun:
-                asyncio.run(s.set_quaternion_rotation(num+1, quat_6d))
+                asyncio.run(s.set_quaternion_rotation(num+1, vqf.quatConj(quat_6d))) #do i know what quatConj does? Nope! Does it fix anything? Also nope. Im going to bed
                 #asyncio.run(s.set_rotation(num+1, pitch_deg, roll_deg, yaw_deg))
                 #asyncio.run(s.set_rotation(num+1, -pitch, -roll, -yaw))
                 #for the love of god, dont ask why i invert pitch when i convert from radians to degerees, and then invert it again afterwards
