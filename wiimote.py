@@ -4,7 +4,10 @@ import asyncio
 import sender
 import math
 import json
+from vqf import VQF
+import numpy as np
 
+#vqf = VQF(0.02)
 dryrun=False #Just connect to wiimotes without connecting to the slimevr server
 
 async def main():
@@ -35,6 +38,7 @@ if numberWiimotes>1:
 print("Press 1+2 on your Wiimote to connect...")
 time.sleep(1)
 wiimotes=[]
+vqfobjects=[]
 for i in range(numberWiimotes):
     print("Connect wiimote ",i)
     wiimote = None
@@ -45,6 +49,9 @@ for i in range(numberWiimotes):
             print("Failed to connect. Retrying...")
     print("Wiimote connected!")
     wiimotes.append(wiimote)
+    vqf=VQF(0.01)
+    vqf.setRestBiasEstEnabled(True)
+    vqfobjects.append(vqf)
 print(wiimotes)
 # Enable motion sensing
 for num,wiimote in enumerate(wiimotes):
@@ -60,7 +67,7 @@ gyro_angles = [0, 0, 0]    # Gyro angles (current orientation)
 all_gyro=[]
 all_acc=[]
 try:
-    for num,wiimote in enumerate(wiimotes):
+    for num,wiimote,vqf in zip(range(numberWiimotes),wiimotes,vqfobjects):
         if numberWiimotes==1:
             while True:
                 calibrationMode=input("Auto calibrate (recommended) [a] or use cached calibration [c]")
@@ -128,18 +135,19 @@ try:
         all_gyro.append(gyro_offsets)
         all_acc.append(acc_offsets)
         print("Initial gyro offsets:", gyro_offsets)
-        multiplier= 360/5700 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3
+        multiplier= math.radians(360/7000)*0.8 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3
         now=time.perf_counter()
         yaw=0
     print("Starting to send imu data...")
     while True:
-        time.sleep(0.02)
+        time.sleep(0.01)
         for wiimote,accel_offsets,gyro_offsets,num in zip(wiimotes,all_acc,all_gyro,range(numberWiimotes)):
             # Read motionplus data
             motion_data = wiimote.state['motionplus']['angle_rate']
             accel_data = wiimote.state['acc']
             # Subtract initial offsets from accelerometer readings
             adjusted_acc = [(accel_data[i] - acc_offsets[i]) for i in range(3)]
+            
             #print(adjusted_acc)
             # Calculate pitch and roll angles from accelerometer data
             pitch_acc = (math.atan2(adjusted_acc[0], math.sqrt(adjusted_acc[1]**2 + adjusted_acc[2]**2))) #there is no way in hell this actually does anything benefitial. I dont know how to sensorfusion, and i dont think chatgpt knows either. Ima just say i implemented acc, but in all honesty, i just copy pasted some code around, and it seems terrible, but maybe less terrible, idk.
@@ -148,6 +156,11 @@ try:
             pitch_acc,roll_acc=roll_acc,pitch_acc
             # Subtract initial offsets from gyro rates
             adjusted_rates = [(motion_data[i] - gyro_offsets[i]) * multiplier for i in range(3)]
+            aj = np.array([-adjusted_rates[1],-adjusted_rates[0],adjusted_rates[2]])
+            vqf.updateGyr(aj)
+            aa = np.array([adjusted_acc[1],adjusted_acc[0],adjusted_acc[2]])
+            #aa= np.array([0.,0.,0.])
+            vqf.updateAcc(aa)
             
             gyro_yaw_delta = math.radians(adjusted_rates[2] * math.cos(pitch_acc) + adjusted_rates[1] * math.sin(roll_acc) * math.sin(pitch_acc) + adjusted_rates[0] * math.cos(roll_acc) * math.sin(pitch_acc))
             # Integrate gyracc_offsets_2acc_offsets_2o rates to get angles
@@ -164,11 +177,23 @@ try:
 
             pitch=-math.degrees(pitch_acc)
             roll=-math.degrees(roll_acc)
-        
+
+            quat_6d = vqf.getQuat6D()
+            # Calculate Euler angles from the quaternion
+            roll = math.atan2(2 * (quat_6d[0] * quat_6d[1] + quat_6d[2] * quat_6d[3]), 1 - 2 * (quat_6d[1]**2 + quat_6d[2]**2))
+            pitch = math.asin(2 * (quat_6d[0] * quat_6d[2] - quat_6d[3] * quat_6d[1]))
+            yaw = math.atan2(2 * (quat_6d[0] * quat_6d[3] + quat_6d[1] * quat_6d[2]), 1 - 2 * (quat_6d[2]**2 + quat_6d[3]**2))
+
+            # Convert Euler angles to degrees if needed
+            roll_deg = math.degrees(roll)
+            pitch_deg = math.degrees(pitch)
+            yaw_deg = math.degrees(yaw)
+
             # Update rotation sent to server
             # pitch, roll, yaw
             if not dryrun:
-                asyncio.run(s.set_rotation(num+1, -pitch, -roll, -yaw))
+                asyncio.run(s.set_rotation(num+1, pitch_deg, roll_deg, yaw_deg))
+                #asyncio.run(s.set_rotation(num+1, -pitch, -roll, -yaw))
                 #for the love of god, dont ask why i invert pitch when i convert from radians to degerees, and then invert it again afterwards
             
 except KeyboardInterrupt:
