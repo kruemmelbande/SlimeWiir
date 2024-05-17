@@ -7,6 +7,12 @@ class sender:
         self.udp_handler = UDPHandler()
     
         class Quaternion:
+            def __init__(self,x,y,z,w):
+                self.x=x
+                self.y=y
+                self.z=z
+                self.w=w
+        class Quaternion_converter:
             def __init__(self, x, y, z):
                 # Calculate the half angles
                 half_x = math.radians(x) / 2
@@ -27,7 +33,7 @@ class sender:
                 self.z = cos_half_x * cos_half_y * sin_half_z - sin_half_x * sin_half_y * cos_half_z
                 self.w = cos_half_x * cos_half_y * cos_half_z + sin_half_x * sin_half_y * sin_half_z
         self.Quaternion=Quaternion
-    
+        self.Quaternion_converter=Quaternion_converter
     async def create_imu(self, imu_id):
         imu_task = asyncio.create_task(self.udp_handler.add_imu(imu_id))
         await imu_task
@@ -39,7 +45,11 @@ class sender:
         return self.udp_handler.slimevr_ip
         
     async def set_rotation(self, imu_id, x, y, z):
-        await self.udp_handler.rotate_imu(imu_id, self.Quaternion(x, y, z))
+        await self.udp_handler.rotate_imu(imu_id, self.Quaternion_converter(x, y, z))
+    
+    async def set_quaternion_rotation(self, imu_id, quat):
+        q = self.Quaternion(quat[0],quat[1],quat[2],quat[3])
+        await self.udp_handler.rotate_imu(imu_id, q)
     
     async def setup(self):
         self.handshake_task = asyncio.create_task(self.udp_handler.handshake(1, 1, 1))

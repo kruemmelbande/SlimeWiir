@@ -51,6 +51,7 @@ for i in range(numberWiimotes):
     wiimotes.append(wiimote)
     vqf=VQF(0.01)
     vqf.setRestBiasEstEnabled(True)
+    vqf.setMotionBiasEstEnabled(True)
     vqfobjects.append(vqf)
 print(wiimotes)
 # Enable motion sensing
@@ -192,7 +193,8 @@ try:
             # Update rotation sent to server
             # pitch, roll, yaw
             if not dryrun:
-                asyncio.run(s.set_rotation(num+1, pitch_deg, roll_deg, yaw_deg))
+                asyncio.run(s.set_quaternion_rotation(num+1, quat_6d))
+                #asyncio.run(s.set_rotation(num+1, pitch_deg, roll_deg, yaw_deg))
                 #asyncio.run(s.set_rotation(num+1, -pitch, -roll, -yaw))
                 #for the love of god, dont ask why i invert pitch when i convert from radians to degerees, and then invert it again afterwards
             
