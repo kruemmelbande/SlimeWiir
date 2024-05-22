@@ -6,8 +6,6 @@ import math
 import json
 from vqf import VQF
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from scipy.spatial.transform import Rotation as R
 
 #vqf = VQF(0.02)
@@ -27,6 +25,13 @@ async def main():
             print("init imu ", i+1)
             #await asyncio.sleep(4)
     
+
+def normalize_vector(v):
+    norm = np.linalg.norm(v)
+    if norm == 0:
+        raise ValueError("Zero magnitude vector can't be normalized.")
+    return v / norm
+
 def quaternion_to_euler(quaternion):
     # Ensure quaternion is normalized
     q = quaternion / np.linalg.norm(quaternion)
@@ -76,7 +81,7 @@ for num,wiimote in enumerate(wiimotes):
     wiimote.led=num+1
     time.sleep(0.1)
 
-asyncio.run(main())
+
 # Initialize variables
 gyro_offsets = [0, 0, 0]  # Gyro offsets (initial orientation)
 gyro_angles = [0, 0, 0]    # Gyro angles (current orientation)
@@ -84,16 +89,7 @@ all_gyro=[]
 all_acc=[]
 aa= np.array([0, 0, 0])
 aj= np.array([0, 0, 0])
-fig, ax = plt.subplots()
-line1, = ax.plot([], [], label='Data 1')
-line2, = ax.plot([], [], label='Data 2')
-ax.legend()
-def update(frame):
-    if frame < len(aa):
-        line1.set_data(np.arange(frame), aa[:frame])
-        line2.set_data(np.arange(frame), aj[:frame])
-        return line1, line2
-ani = FuncAnimation(fig, update, frames=len(aa), blit=True)
+
 
 try:
     for num,wiimote,vqf in zip(range(numberWiimotes),wiimotes,vqfobjects):
@@ -153,10 +149,10 @@ try:
             start_time = time.time()
             while time.time() - start_time < 20:
                 motion_data = wiimote.state['motionplus']['angle_rate']
-                gyrosens = [abs(gyrosens[i] + motion_data[i] - gyro_offsets[i]) for i in range(3)]
+                gyrosens = [(gyrosens[i] + motion_data[i] - gyro_offsets[i]) for i in range(3)]
                 time.sleep(0.01)
             #i am making this shit up as i go. I have no idea what any of this does, i wanna sleep
-            sens=[(360/gyrosens[i]) for i in range(3)]
+            sens=[abs(360/gyrosens[i]) for i in range(3)]
             print(sens)
             with open("calibrationcache","w") as f:
                 json.dump({
@@ -182,6 +178,8 @@ try:
         #multiplier= math.radians(360/7000)*0.8 #This just applies to my wiimote. It probably wont apply to yours... And if you are using multiple wiimotes.. Good luck :3 (There used to be some sense behind this, i have since long abandoned this principle)
         now=time.perf_counter()
         yaw=0
+    print()
+    asyncio.run(main())
     print("Starting to send imu data...")
     print("Please leave the wiimote still for a few seconds to establish initial orientation...")
     while True:
@@ -209,9 +207,9 @@ try:
             vqf.updateGyr(aj)
             aa = np.array([-adjusted_acc[1],-adjusted_acc[2],-adjusted_acc[0]])
             #aa= np.array([0.,0.,0.])
-            vqf.updateAcc(aa)
-            print(aj,aa)
-            plt.show()
+            #vqf.updateAcc(aa)
+            #print(aj,aa)
+
             #fuck that part, i hate that
             
             
@@ -247,8 +245,14 @@ try:
             # Update rotation sent to server
             # pitch, roll, yaw
             if not dryrun:
-                angles=quaternion_to_euler(quat_6d)
+                #angles=quaternion_to_euler(quat_6d)
                 #print(angles)
+                r=R.from_quat(quat_6d)
+                angles = r.as_rotvec(degrees=True)
+                angles = r.as_euler("xyz",degrees=True)
+                print(angles)
+                #if i had a dollar for every time i try to fix the format of this, i could buy another set of slime trackers that actually work
+                #asyncio.run(s.set_rotation(num+1, quat_6d[0], quat_6d[1], quat_6d[2]))
                 asyncio.run(s.set_rotation(num+1, (angles[0]), (angles[1]), (angles[2])))
                 #asyncio.run(s.set_quaternion_rotation(num+1, vqf.quatConj(quat_6d))) #do i know what quatConj does? Nope! Does it fix anything? Also nope. Im going to bed
                 #asyncio.run(s.set_rotation(num+1, pitch_deg, roll_deg, yaw_deg))
