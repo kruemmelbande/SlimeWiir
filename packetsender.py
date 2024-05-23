@@ -55,7 +55,7 @@ class UDPHandler:
 
 
     async def listen_for_handshake(self):
-        timeout = 10  # Timeout in seconds
+        timeout = 3  # Timeout in seconds
         end_time = asyncio.get_event_loop().time() + timeout
 
         while True:
@@ -72,13 +72,14 @@ class UDPHandler:
 
             received_message = data.decode("utf-8", "ignore")
 
-            print("Received message:", received_message)  # Debug print
+            #print("Received message:", received_message)  # Debug print
 
             if "Hey OVR =D 5" in received_message:
                 self.slimevr_ip = address[0]  # Update slimevrIp with the sender's IP address
 
                 return self.slimevr_ip
-    
+            else:
+                print(f"Unknown message recieved from {address} : {print(received_message)}")
     async def add_imu(self, imu_type):
         if self.slimevr_ip == self.broadcast_ip:
             #print("SlimeVR Server not found!")
