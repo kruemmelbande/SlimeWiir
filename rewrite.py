@@ -11,7 +11,7 @@ import math
 
 rate = 100 #tracking rate in hz
 rbe = True
-mbe = False
+mbe = True
 caltime = 2
 
 class Wiimote:
@@ -21,13 +21,13 @@ class Wiimote:
         self.index = index
         self.gyroOff = [5000.,7000.,7000.]
         self.accOff = [128.,128.,128.]
-        self.sensOffset = [0.07,0.07,0.07]
+        self.sensOffset = [0.001,0.001,0.001]
         pass
     def getgyro(self):
-        return np.array([math.radians(i-k)*m for i,k,m in zip(self.wiimote.state['motionplus']['angle_rate'],self.gyroOff,self.sensOffset)])
+        return np.array([(i-k)*m for i,k,m in zip(self.wiimote.state['motionplus']['angle_rate'],self.gyroOff,self.sensOffset)])
     def getacc(self):
-        acc = np.array([i-k for i,k in zip(self.wiimote.state['acc'],self.accOff)])
-        print(acc)
+        acc = np.array([(i-k)/3 for i,k in zip(self.wiimote.state['acc'],self.accOff)])
+        #print(acc)
         return acc
     
     
@@ -53,9 +53,9 @@ if numMotes not in range(1,16):
 for i in range(numMotes):
     print("Connect wiimote ", i)
     wiimote=None
-    vqf=vqf.VQF(1/rate)
-    vqf.setRestBiasEstEnabled(rbe)
-    vqf.setMotionBiasEstEnabled(mbe)
+    vqfObj=vqf.VQF(1/rate)
+    vqfObj.setRestBiasEstEnabled(rbe)
+    vqfObj.setMotionBiasEstEnabled(mbe)
     while not wiimote:
         try:
             wiimote = cwiid.Wiimote()
@@ -65,15 +65,16 @@ for i in range(numMotes):
     wiimote.rpt_mode = cwiid.RPT_MOTIONPLUS | cwiid.RPT_ACC
     wiimote.enable(cwiid.FLAG_MOTIONPLUS)
     wiimote.led=i+1
-    wiimotes.append(Wiimote(wiimote,vqf,i))
+    wiimotes.append(Wiimote(wiimote,vqfObj,i))
     
-gyro = [0,0,0]
-acc = [0,0,0]
 s = asyncio.run(start_connect())
 for wiimote in wiimotes:
+    gyro = [0,0,0]
+    acc = [0,0,0]
     asyncio.run(s.create_imu(wiimote.index+1))
-    input("press enter to start calibration")
-    
+    input(f"Press enter to start calibration for wiimote {wiimote.index}")
+    time.sleep(1)
+    print("Calibration started!")
     now = time.perf_counter()
     samples = 0
     while (time.perf_counter()-now < caltime):
@@ -83,17 +84,15 @@ for wiimote in wiimotes:
         gyro = [gyro[i] + gyro_raw[i] for i in range(3)]
 
     wiimote.gyroOff=[i/samples for i in gyro]
-
+    print("Calibration finished!")
 
 now = time.perf_counter()
 while True:
     for wiimote in wiimotes:
 
-        vqf = wiimote.vqf
-        #vqf.updateGyr(np.array(wiimote.getgyro()))
-        #vqf.updateAcc(np.array(wiimote.getacc()))
-        vqf.update(wiimote.getgyro(),wiimote.getacc())
+        vqfObj = wiimote.vqf
+        vqfObj.update(wiimote.getgyro(),wiimote.getacc())
     
-        asyncio.run(s.set_quaternion_rotation(wiimote.index+1,vqf.getQuat6D()))
+        asyncio.run(s.set_quaternion_rotation(wiimote.index+1,vqfObj.getQuat6D()))
     time.sleep(max(((1/rate)-(time.perf_counter()-now)),0))
     now = time.perf_counter()
