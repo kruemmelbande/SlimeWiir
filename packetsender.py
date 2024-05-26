@@ -79,7 +79,7 @@ class UDPHandler:
 
                 return self.slimevr_ip
             else:
-                print(f"Unknown message recieved from {address} : {print(received_message)}")
+                print(f"Unknown message recieved from {address} : {received_message}")
     async def add_imu(self, imu_type):
         if self.slimevr_ip == self.broadcast_ip:
             #print("SlimeVR Server not found!")
