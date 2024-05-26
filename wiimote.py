@@ -95,11 +95,10 @@ for i in range(numMotes):
     wiimote.rpt_mode = cwiid.RPT_MOTIONPLUS | cwiid.RPT_ACC
     wiimote.enable(cwiid.FLAG_MOTIONPLUS)
     if numMotes <= 4:
-        wiimote.led = (i+1)**2
+        wiimote.led = (2**i)
     else:
-        wiimote.led = i+1
+        wiimote.led = i + 1
     wiimotes.append(Wiimote(wiimote,vqfObj,i))
-    
 s = asyncio.run(start_connect())
 for wiimote in wiimotes:
     gyro = [0,0,0]
