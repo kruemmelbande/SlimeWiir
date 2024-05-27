@@ -34,7 +34,7 @@ class UDPHandler:
         self.socket.sendto(packet, (self.slimevr_ip, self.slimevr_port))
         #print("Packet sent.")  # Debug print
 
-    async def handshake(self, imu_type, board_type, mcu_type):
+    async def handshake(self, imu_type, board_type, mcu_type, mac):
         #print("Resetting slimevrIp to broadcastIp:", self.broadcast_ip)  # Debug print
         self.slimevr_ip = self.broadcast_ip
 
@@ -42,7 +42,7 @@ class UDPHandler:
         while result == "":
             await asyncio.sleep(0.5)
             #print("Sending handshake packet...")  # Debug print
-            packet = self.packet_builder.build_handshake_packet(imu_type, board_type, mcu_type)
+            packet = self.packet_builder.build_handshake_packet(imu_type, board_type, mcu_type, mac)
             self.send_packet(packet)
 
             #print("Listening for handshake response...")  # Debug print

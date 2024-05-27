@@ -18,7 +18,7 @@ class packetbuilder:
         packet[0:4] = struct.pack('>i', 21)  # packet 3 header
         return packet
 
-    def build_handshake_packet(self, imu_type, board_type, mcu_type):
+    def build_handshake_packet(self, imu_type, board_type, mcu_type, mac):
         packet = bytearray(128)
         packet[0:4] = struct.pack('>i', 3)  # packet 3 header
         packet[4:12] = struct.pack('>q', self.packet_id)  # packet counter
@@ -31,7 +31,7 @@ class packetbuilder:
         fw_string_length = len(fw_string_bytes).to_bytes(1, byteorder='big')  # Length of fw string
         packet[40:41] = fw_string_length
         packet[41:41+len(fw_string_bytes)] = fw_string_bytes  # fw string
-        packet[41+len(fw_string_bytes):47+len(fw_string_bytes)] = bytes([0x01, 0x02, 0x03, 0x04, 0x05, 0x06])  # MAC address
+        packet[41+len(fw_string_bytes):47+len(fw_string_bytes)] = bytes(mac)  # MAC address
         return packet
 
 

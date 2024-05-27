@@ -11,7 +11,7 @@ rate = 100 # tracking rate in hz
 rbe = True # technically this might mean we might not need to calibrate the gyro, but im doing it anyway
 mbe = False # 2 hour reset on wiimotes when?
 caltime = 2 # 2 seconds of gyro calibration seems to work fine
-
+mac = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06] # change this if you want to run multilpe slimewiir sessions on the same network
 class Wiimote:
     def __init__(self, cwiidObject,vqfObject,index) -> None:
         self.wiimote = cwiidObject
@@ -41,8 +41,8 @@ def toQuat(euler):
     rot = Rotation.from_euler("xyz",euler)
     return rot.as_quat()
 
-async def start_connect():
-    s = sender.sender()
+async def start_connect(mac):
+    s = sender.sender(mac)
     print("Starting connection to SlimeVR server...")
     await s.setup()
     print(f"Connected to server at {s.get_slimevr_ip()}")
@@ -99,7 +99,8 @@ for i in range(numMotes):
     else:
         wiimote.led = i + 1
     wiimotes.append(Wiimote(wiimote,vqfObj,i))
-s = asyncio.run(start_connect())
+    
+s = asyncio.run(start_connect(mac))
 for wiimote in wiimotes:
     gyro = [0,0,0]
     acc = [0,0,0]

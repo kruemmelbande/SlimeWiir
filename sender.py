@@ -3,7 +3,7 @@ from packetsender import UDPHandler
 import math
 import threading
 class sender:
-    def __init__(self):
+    def __init__(self, mac):
         self.udp_handler = UDPHandler()
     
         class Quaternion:
@@ -32,8 +32,9 @@ class sender:
                 self.y = cos_half_x * sin_half_y * cos_half_z + sin_half_x * cos_half_y * sin_half_z
                 self.z = cos_half_x * cos_half_y * sin_half_z - sin_half_x * sin_half_y * cos_half_z
                 self.w = cos_half_x * cos_half_y * cos_half_z + sin_half_x * sin_half_y * sin_half_z
-        self.Quaternion=Quaternion
-        self.Quaternion_converter=Quaternion_converter
+        self.Quaternion = Quaternion
+        self.Quaternion_converter = Quaternion_converter
+        self.mac = mac
     async def create_imu(self, imu_id):
         imu_task = asyncio.create_task(self.udp_handler.add_imu(imu_id))
         await imu_task
@@ -52,7 +53,7 @@ class sender:
         await self.udp_handler.rotate_imu(imu_id, q)
     
     async def setup(self):
-        self.handshake_task = asyncio.create_task(self.udp_handler.handshake(1, 1, 1))
+        self.handshake_task = asyncio.create_task(self.udp_handler.handshake(1, 1, 1, self.mac))
         await self.handshake_task
         
         # Start the heartbeat function in a separate thread
