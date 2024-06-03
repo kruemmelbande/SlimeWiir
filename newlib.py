@@ -45,6 +45,10 @@ wiiuse.rumble(wiimote[0],1)
 time.sleep(0.2)
 wiiuse.rumble(wiimote[0],0)
 wiiuse.set_leds(wiimote[0], wiiuse.LED_1)
+now = time.time()
+while time.time()-now < 10:
+    wiiuse.poll(wiimote,1)
+    print("waiting cuz buggy :3")
 wiiuse.motion_sensing(wiimote[0],1)
 a = wiimote[0]
 a.motionplus = True
