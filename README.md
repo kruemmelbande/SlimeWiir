@@ -2,23 +2,21 @@
 Wiimotes have terrible imus, and are not intended to be trackers.  
 Please do not ever buy wiimotes for the purposes of using them as trackers.   
 Its probably not worth your time to try this.  
-You will get drift within about 3 seconds, due to a complete lack of sensor fusion.  
-UPDATE!
-I am now doing sensor fusion!
-Quite badly, might i add, but i am technically doing it, and its kinda working.  
-pitch and roll are entirely decided by the accel now, which is probably a very bad idea, but its better than just the gyro.  
-I could actually make it gyro+accel, but like, thats a lot of math, and my brain already hurts from making yaw alone work.  
-  
-This has only been tested with linux.  
-You will need to install the cwiid library, which might be a bit difficult.  
+Because sensitivity is wonky, it does drift quite a bit, but at least its not 3 seconds anymore.  
+Fast movements are not tracked at all for... reasons...  
+
+This project uses cwiid which is only available on linux.   
+There is an experimental windows version, but its super broken cuz the library somehow has even less documentation than cwiid.  
+Installing cwiid can be a bit weird, since its quite old.    
 If you are using arch linux, install cwiid-git from the aur.  
+If you are anything debian based, consider using arch btw.  
 
 To use it, run wiimote.py, then press the 1+2 or the sync button on the wiimote.  
 Once the wiimote is connected, place the wiimote face down on a flat surface.  
 Once calibration is complete, the wiimote should show up in the slimevr server.  
-Only one wiimote at a time is currently supported.
 You need to have wii motion plus connected.  
 If this fails to connect to the slimevr server, try restarting the server.  
-You might need to adjust your multiplier. To do this, set the multiplier to 1, then turn the wiimote one full rotation. Then set the multiplier to 360/your rotation.  
 
 This project is not affiliated or endorsed by SlimeVR or Nintendo.   
+
+please dont use this, otherwise zrock will get mad at me, and then i will be sad.
