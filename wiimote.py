@@ -9,7 +9,7 @@ import time
 
 rate = 100 # tracking rate in hz
 rbe = True # technically this might mean we might not need to calibrate the gyro, but im doing it anyway
-mbe = False # 2 hour reset on wiimotes when?
+mbe = True # 2 hour reset on wiimotes when?
 caltime = 2 # 2 seconds of gyro calibration seems to work fine
 mac = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06] # change this if you want to run multilpe slimewiir sessions on the same network
 
