@@ -1,22 +1,7 @@
-# This project was created for entertainment purposes only.  
-Wiimotes have terrible imus, and are not intended to be trackers.  
-Please do not ever buy wiimotes for the purposes of using them as trackers.   
-Its probably not worth your time to try this.  
-Because sensitivity is wonky, it does drift quite a bit, but at least its not 3 seconds anymore.  
-Fast movements are not tracked at all for... reasons...  
-
-This project uses cwiid which is only available on linux.   
-There is an experimental windows version, but its super broken cuz the library somehow has even less documentation than cwiid.  
-Installing cwiid can be a bit weird, since its quite old.    
-If you are using arch linux, install cwiid-git from the aur.  
-If you are anything debian based, consider using arch btw.  
-
-To use it, run wiimote.py, then press the 1+2 or the sync button on the wiimote.  
-Once the wiimote is connected, place the wiimote face down on a flat surface.  
-Once calibration is complete, the wiimote should show up in the slimevr server.  
-You need to have wii motion plus connected.  
-If this fails to connect to the slimevr server, try restarting the server.  
-
-This project is not affiliated or endorsed by SlimeVR or Nintendo.   
-
-please dont use this, otherwise zrock will get mad at me, and then i will be sad.
+# Do not use this.
+This project was made for the purposes of learning the SlimeVR Tracker protocol.  
+It has served this purpose, and thus I will depricate this project, and maybe use my knowledge for more.. useful things.  
+As such, I will be taking down the builds, because I do not want to encourage the use of wiimotes for slimes.  
+The code will remain available, however, no instructions will be provided (and also, some of the dependencies are now broken, so you probably cant really run it without the builds i have)  
+If you truly want to try it, contact me and ill see if i have the builds kicking around somewhere, but I will personally make sure know what you are getting into.  
+If you are reading this and are from the slimevr wrangler team, hello :3 id strongly recommend against wiimotes, since it doesnt track fast movements at all, making it unusable for the purpose of slime. Of course the imu is crap in many other ways, but Im sure you know that already.  
